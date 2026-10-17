@@ -1,0 +1,49 @@
+# personal notes, not part of the project
+instructions.md
+
+# weights, exported engines, calibration artifacts
+*.pt
+*.engine
+*.onnx
+layout.json
+structure.png
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# run artifacts (dirs are kept, contents are not)
+AI/input/*
+AI/output/*
+AI/models/*
+!AI/input/.gitkeep
+!AI/output/.gitkeep
+!AI/models/.gitkeep
+out/
+runs/
+data/
+datasets/
+
+# footage: never commit real or test video
+*.log
+*.mp4
+*.avi
+*.mkv
+*.mov
+*.dav
+*.h264
+*.h265
+*.rf
+*.ts
+*.cif
+*.nvr
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/

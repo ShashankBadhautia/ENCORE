@@ -1,0 +1,9 @@
+ultralytics>=8.4.131
+opencv-python>=4.10
+PyYAML>=6.0
+numpy>=1.24
+
+# ByteTrack requirements, declared explicitly because Ultralytics tries to
+# pip-install them at runtime, which fails inside a uv venv.
+lap>=0.5.12
+scipy>=1.10

@@ -1,0 +1,94 @@
+camera:
+  source: "0"                 # webcam index, video file path, or rtsp:// URL
+  width: 1280
+  height: 720
+  fps: 30
+
+model:
+  weights: "yolo26s.pt"      # yolo26n / yolo26s / yolo26m / yolo26l / yolo26x
+  imgsz: 640
+  conf: 0.35
+  tracker: "bytetrack.yaml"
+  engine: ""                 # cached TensorRT engine; derived from weights if empty
+  half: true
+  device: ""                 # "", "0", "cpu"
+
+map:
+  # Four floor reference points, clockwise, in camera pixels.
+  # null -> smartstore-layout will open a window and let you click them.
+  reference_points: null
+  # Optional region of interest in CAMERA pixels, 4+ points, clockwise.
+  # Only people whose foot point falls inside are counted and mapped.
+  # null -> no ROI, everything in frame is mapped (default).
+  roi_polygon: null
+  width_m: 12.0              # real width of the mapped floor rectangle
+  height_m: 9.0              # real depth of the mapped floor rectangle
+  grid_m: 1.0                # zone grid cell size, metres
+  boundary_margin_m: 0.15    # hysteresis for footfall boundary crossings
+  zones:                     # named zones, overlaid on the grid
+                              # kind: line  = threshold strip; crossing in counts
+                              #              as an entry, crossing out as an exit
+                              # kind: queue = queue length is reported
+                              # kind: area  = plain named region
+    - id: "entrance"
+      kind: "line"
+      polygon: [[5.4, 0.0], [6.6, 0.0], [6.6, 0.9], [5.4, 0.9]]
+    - id: "checkout"
+      kind: "queue"
+      polygon: [[9.0, 5.0], [12.0, 5.0], [12.0, 9.0], [9.0, 9.0]]
+
+layout:
+  calib_seconds: 20.0        # calibration clip length
+  max_frames: 90             # hard cap on frames sampled for the median
+  mask_dilate_px: 24         # padding around person boxes when removing them
+  structure_gamma: 0.85      # darkening applied to the rectified store image
+
+# Continuous geospatial density field, in real floor metres.
+# Tracked foot points -> homography -> x/y metres -> Gaussian KDE -> smooth heat.
+# The 1 m grid above still drives the CSV metrics; this drives the picture.
+heatmap:
+  enabled: true
+  window_seconds: 20         # how much RECENT movement contributes
+  decay: null                # null -> derive from window_seconds (half-life).
+                             # set e.g. 0.95 to use per-second retention directly
+  sigma_m: 0.5               # spatial smoothing radius in metres
+  resolution_px_per_m: 40    # density raster sampling; upscaled smoothly for display
+  max_kernel_px: 48          # hard cap on the per-person splat cost
+  cumulative: false          # true = all-time activity instead of the recent window
+
+# Side-by-side presentation stream. `smartstore-scan` writes
+# output/smartstore360_<clip>_dashboard.mp4 by default.
+visualization:
+  dashboard: true
+  output_width: 1920
+  output_height: 1080
+  camera_frac: 0.45          # 45% source video / 55% store map
+  show_track_ids: true
+  show_zone_labels: true
+  show_roi_dimensions: true
+  show_scale_bar: true
+  show_heatmap_legend: true
+  show_metrics: true
+  heat_alpha: 0.78           # 1.0 = heat fully hides the store underneath
+
+thresholds:
+  density_high: 0.6          # persons per m2 before congestion is flagged
+
+output:
+  dir: "output"
+  layout: "output/layout.json"
+  structure: "output/structure.png"
+  metrics_csv: "output/metrics.csv"
+  metrics_jsonl: "output/metrics.jsonl"
+  # Both videos are written by default. Running a file source auto-appends the
+  # clip name: input/shop1.mp4 -> output/heatmap_shop1.mp4, output/annotated_shop1.mp4
+  # Set write_video: false for live-only runs that just print to stdout.
+  write_video: true
+  heatmap_video: "output/heatmap.mp4"
+  heatmap_px_per_m: 32         # grid-cell heatmap video resolution (legacy view)
+  # Accumulated person-seconds per cell, drawn as a heat layer under the live
+  # counts. This is the layer that builds up over the run. false = live only.
+  accumulate: true
+  annotated_video: "output/annotated.mp4"
+  dashboard_video: "output/smartstore360_dashboard.mp4"
+  roi_geometry_csv: "output/roi_geometry.csv"
